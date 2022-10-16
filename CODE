@@ -1,0 +1,85 @@
+#include <LiquidCrystal_I2C.h>
+#include<Wire.h>
+#include<Servo.h>
+#include <Adafruit_MLX90614.h>
+Adafruit_MLX90614 mlx = Adafruit_MLX90614();
+int in = 15;
+int inpr = 16;
+int out = 14;
+int outpr = 17;
+int ppl = 0;
+int flag=0;
+//LiquidCrystal lcd(12, 11, 5, 4, 3, 2);
+LiquidCrystal_I2C lcd(0x27,16,2);
+bool pi = 0;
+bool po = 0;
+Servo s1;
+void setup() {
+pinMode(15, INPUT);
+pinMode(14, INPUT);
+pinMode(16, OUTPUT);
+pinMode(17, OUTPUT);
+lcd.init();
+lcd.backlight();
+lcd.print("TEMPERATURE:");
+lcd.setCursor(0, 1);
+lcd.print("PEOPLE IN:");
+s1.attach(3);
+s1.write(0);
+Serial.begin(9600);
+mlx.begin();
+}
+void loop() {
+digitalWrite(outpr, HIGH);
+digitalWrite(inpr, HIGH);
+pi = digitalRead(in);
+po = digitalRead(out);
+if (po == 1){
+if(((mlx.readObjectTempC())>=36) && ((mlx.readObjectTempC())<38)){
+ppl++ ;
+flag=1;
+lcd.setCursor(12,0);
+lcd.print(mlx.readObjectTempC());
+//delay(500);
+}
+}
+if (pi == 1 && (ppl>0 && ppl<3)){
+ppl--;
+flag=1;
+lcd.setCursor(11,1);
+lcd.print(ppl);
+lcd.setCursor(13,1);
+lcd.print(" ");
+delay(1000);
+s1.write(90);
+delay(2000);
+s1.write(0);
+//delay(500);
+}
+ppl = constrain(ppl, 0, 50);
+if (flag == 1 && ppl <= 2){
+if(((mlx.readObjectTempC())>=36) && ((mlx.readObjectTempC())<38)){
+lcd.setCursor(11,1);
+lcd.print(ppl);
+lcd.setCursor(13,1);
+lcd.print("YES");
+delay(1000);
+s1.write(90);
+delay(2000);
+s1.write(0);
+flag=0;
+}
+}
+else if(ppl==0){
+lcd.setCursor(13,1);
+lcd.print(" ");
+}
+else if( ppl>=3 ){
+if(((mlx.readObjectTempC())<36) || ((mlx.readObjectTempC())>=38)){
+lcd.setCursor(13,1);
+lcd.print("NO ");
+//delay(500);
+}
+}
+delay(500);
+}
